@@ -4,7 +4,11 @@ export class PaginaPrincipal {
   inputDePesquisa = '[autocomplete="off"]';
   divListaDeUsuarios = "#listaUsuarios > #userData";
   divDadosUsuarios = "#userData";
+  pNome = "#userDataName";
+
   liTextoPaginas = "#paginacaoAtual";
+  paginaAnterior = "#paginacaoVoltar";
+  paginaProxima = "#paginacaoProximo";
 
   // ver se vai precisar nos testes
   anchorRaro = '[href="/"]';
