@@ -12,9 +12,8 @@ describe("Listar usuários", () => {
   it("Pesquisar usuário pelo email", () => {});
 
   describe("Listagem de usuário com erros", () => {
+    it("Não deverá pesquisar se não houver nada escrito na barra de pesquisa", function () {});
     it("Deve receber 404 com id inexistente", () => {});
-
-    it("Deve retornar 400 com id como string", () => {});
 
     it("Deve receber 500 se...?", () => {});
   });
