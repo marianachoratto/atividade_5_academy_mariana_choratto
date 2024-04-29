@@ -23,3 +23,42 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+import { faker } from "@faker-js/faker";
+
+const apiUrl = "rarocrud-80bf38b38f1f.herokuapp.com/api/v1";
+
+Cypress.Commands.add("cadastrarUsuário", () => {
+  let name = "faker " + faker.person.firstName();
+  let email = faker.internet.email().toLowerCase();
+  let nomeUser;
+  let userId;
+  let emailUser;
+
+  return cy
+    .request({
+      method: "POST",
+      url: apiUrl + "/users",
+      body: {
+        name: name,
+        email: email,
+      },
+    })
+    .then((resposta) => {
+      userId = resposta.body.id;
+      nomeUser = resposta.body.name;
+      emailUser = resposta.body.email;
+
+      return {
+        id: userId,
+        nome: nomeUser,
+        email: emailUser,
+      };
+    });
+});
+
+Cypress.Commands.add("deletarUsuario", (id) => {
+  return cy.request({
+    method: "DELETE",
+    url: apiUrl + `/users/${id}`,
+  });
+});

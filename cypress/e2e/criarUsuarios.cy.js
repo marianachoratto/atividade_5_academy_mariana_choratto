@@ -1,11 +1,16 @@
 import { faker } from "@faker-js/faker";
 import CadastrarUsuarios from "../support/pages/CadastrarUsuarios";
+import { PaginaDetalhes } from "../support/pages/PaginaDetalhes";
 
 describe("Teste de criar usuários", () => {
   let cadastrarUsuario = new CadastrarUsuarios();
-  let baseUrl = "https://rarocrud-frontend-88984f6e4454.herokuapp.com";
+  let paginaDetalhes = new PaginaDetalhes();
   let nome = generateUsernameWithoutNumbers(5);
   let email = faker.internet.email();
+  let nomeUser;
+  let userId;
+  let emailUser;
+  const apiUrl = "rarocrud-80bf38b38f1f.herokuapp.com/api/v1";
 
   function generateUsernameWithoutNumbers() {
     // Gerando um nome de usuário com base em nomes reais
@@ -28,12 +33,29 @@ describe("Teste de criar usuários", () => {
       cadastrarUsuario.clickcadastrar();
       cy.contains("Usuário salvo com sucesso!").should("be.visible");
 
-      // como deletar esse indivíduo?
+      // Apagar usuário
     });
 
-    it("checando se o usuário foi criado no banco de dados", function () {});
+    it("checando se o usuário foi criado no banco de dados", function () {
+      cy.cadastrarUsuário().then(function (resposta) {
+        cy.log(resposta);
+        nomeUser = resposta.nome;
+        userId = resposta.id;
+        emailUser = resposta.email;
 
-    // apagar usuário
+        cadastrarUsuario.typeNome(nomeUser);
+        cadastrarUsuario.typeEmail(emailUser);
+        cadastrarUsuario.clickcadastrar();
+        cy.contains("Usuário salvo com sucesso!").should("be.visible");
+
+        cy.visit(`/users/${userId}`);
+        cy.get(paginaDetalhes.InputId).should("have.value", userId);
+        cy.get(paginaDetalhes.InputName).should("have.value", nomeUser);
+        cy.get(paginaDetalhes.InputEmail).should("have.value", emailUser);
+
+        cy.deletarUsuario(userId);
+      });
+    });
   });
 
   describe("Testes de erro", function () {
@@ -80,9 +102,55 @@ describe("Teste de criar usuários", () => {
   });
 
   describe("Testes com máximo e mínimo de caracteres", function () {
-    it("Não deve ser possível cadastrar usuário com e-mail já utilizado em outro cadastro", () => {});
+    it("Não deve ser possível cadastrar usuário com e-mail já utilizado em outro cadastro", function () {
+      cy.cadastrarUsuário().then(function (resposta) {
+        cy.intercept("POST", "/api/v1/users").as("criarUsuario");
+        nomeUser = resposta.nome;
+        emailUser = resposta.email;
+        userId = resposta.id;
 
-    it("Não deve ser possível cadastrar um nome com mais de 100 caracteres", () => {});
+        cy.log(userId, nomeUser);
+
+        cadastrarUsuario.typeNome(nomeUser);
+        cadastrarUsuario.typeEmail(emailUser);
+        cadastrarUsuario.clickcadastrar();
+        cy.wait("@criarUsuario");
+
+        cy.contains("Este e-mail já é utilizado por outro usuário.");
+
+        cy.deletarUsuario(userId);
+      });
+    });
+
+    it("Não deve ser possível cadastrar usuário com e-mail já utilizado em outro cadastro", function () {
+      cy.intercept(
+        "POST",
+        "rarocrud-80bf38b38f1f.herokuapp.com/api/v1/users"
+      ).as("criarUsuario");
+
+      cy.cadastrarUsuário().then(function (resposta) {
+        nomeUser = resposta.nome;
+        emailUser = resposta.email;
+        userId = resposta.id;
+
+        cy.log(userId, nomeUser);
+      }),
+        cadastrarUsuario.typeNome(nomeUser);
+      cadastrarUsuario.typeEmail(emailUser);
+      cadastrarUsuario.clickcadastrar();
+      cy.contains("Este e-mail já é utilizado por outro usuário.");
+
+      deletarUsuario(userId);
+    });
+
+    it.only("Não deve ser possível cadastrar um nome com mais de 100 caracteres", () => {
+      let nomeCriado = "";
+      for (let i = 1; i <= 101; i++) {
+        nomeCriado += "a";
+      }
+
+      cy.log(nomeCriado.length);
+    });
 
     it("Não deve ser possível cadastrar um nome com menos de 4 caracteres", () => {});
 

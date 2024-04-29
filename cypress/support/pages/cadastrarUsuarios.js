@@ -5,6 +5,10 @@ export default class PaginaDeCastrato {
   anchorRaro = '[href="/users"]';
   anchorVoltar = "a img";
 
+  pgDetalhesInputName = "[name='name']";
+  pgDetalhesInputEmail = "[name='email']";
+  pgDetalhesInputId = "[name='id']";
+
   typeNome(nome) {
     cy.get(this.inputName).type(nome);
   }

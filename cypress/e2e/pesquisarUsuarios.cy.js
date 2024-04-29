@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 
 describe("Listar usuários", () => {
   beforeEach(() => {
-    cy.visit("");
+    cy.visit("/users");
   });
 
   it("Deve ser encontrado um usuário através de seu ID", () => {});
