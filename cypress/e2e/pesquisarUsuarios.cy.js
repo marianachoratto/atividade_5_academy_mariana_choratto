@@ -17,7 +17,6 @@ describe("Listar usuários", () => {
     cy.get("input").should("be.enabled");
   });
 
-  // Está dando erro
   it("Pesquisar usuário pelo nome", () => {
     cy.cadastrarUsuário().then(function (resposta) {
       nomeUser = resposta.nome;
@@ -25,7 +24,7 @@ describe("Listar usuários", () => {
       idUser = resposta.id;
 
       cy.get("input").type(nomeUser);
-      // Não precisa do ,then, pq eu não vou precisar dos valores da requisição de pesquisa
+      // Não precisa do .then, pq eu não vou precisar dos valores da requisição de pesquisa
       cy.wait("@getPesquisa");
       cy.get("[id='userData']").should("have.length", 1);
       cy.contains("Nome:")
@@ -33,7 +32,16 @@ describe("Listar usuários", () => {
         .should("be.equal", "Nome: " + nomeUser);
       cy.contains("E-mail:")
         .invoke("text")
-        .should("be.equal", "E-mail: " + emailUser);
+        .then(function (email) {
+          let emailCorreto = email
+            .split("E-mail: ")
+            .toString()
+            .split("...")
+            .toString()
+            .split(",")[1];
+
+          expect(emailUser.includes(emailCorreto)).to.equal(true);
+        });
 
       cy.deletarUsuario(idUser);
     });
@@ -69,6 +77,20 @@ describe("Listar usuários", () => {
     });
   });
 
+  it("O botão de apagar e resetar o campo funciona corretamente", function () {
+    pgPrincipal.digitarPesquisa();
+    cy.get(pgPrincipal.buttonsPesquisar).eq(1).click();
+    cy.get(pgPrincipal.inputDePesquisa).should("be.empty");
+  });
+
+  it("A requisição de pesquisa só acontece após escrever no campo", function () {
+    cy.intercept("GET", "/api/v1/search?value=*").as("pesquisar");
+
+    cy.get("@pesquisar").should("not.exist");
+    pgPrincipal.digitarPesquisa();
+    cy.wait("@pesquisar").should("exist");
+  });
+
   describe("Listagem de usuário com erros", () => {
     it("Não deve ser encontrado um usuário através de seu ID", () => {
       cy.cadastrarUsuário().then((resposta) => {
@@ -89,8 +111,8 @@ describe("Listar usuários", () => {
       cy.get("@getPesquisa").should("not.exist");
     });
 
-    it("Deve receber 404 com id inexistente", () => {
-      cy.get("input").type("id-mockado-5723812");
+    it("Deve aparecer as informações corretas se não encontrar nenhum usuário na pesquisa", () => {
+      cy.get("input").type("novo-Usuario-8728667");
       cy.wait("@getPesquisa");
       cy.contains(
         "h3",

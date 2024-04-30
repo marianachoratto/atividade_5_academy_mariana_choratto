@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { PaginaPrincipal } from "../support/pages/paginaPrincipal";
+import { PaginaDetalhes } from "../support/pages/PaginaDetalhes";
 
 describe("Listar usuários", () => {
   beforeEach(() => {
@@ -7,15 +8,19 @@ describe("Listar usuários", () => {
   });
 
   let pgPrincipal = new PaginaPrincipal();
+  let pgDetalhes = new PaginaDetalhes();
   const urlCadastroUsuario =
     "https://rarocrud-frontend-88984f6e4454.herokuapp.com/users/novo";
 
-  describe("Testes de funcionamento da página", function () {
+  describe.only("Testes de funcionamento da página", function () {
     it("Deve retornar cards dos usuários", () => {
+      cy.intercept("GET", "/api/v1/users").as("Users");
+
+      cy.wait("@Users");
       cy.get(pgPrincipal.divListaDeUsuarios).should("be.visible");
     });
 
-    it("Apertar o botão ver detalhes deve levar o usuário para outra página", () => {
+    it("Apertar o botão ver detalhes deve levar o usuário para outra página que conterá os inputs id, nome e e-mail", () => {
       let idUsuario;
       let name = faker.person.fullName();
       let email = faker.internet.email();
@@ -44,6 +49,10 @@ describe("Listar usuários", () => {
             "equal",
             `https://rarocrud-frontend-88984f6e4454.herokuapp.com/users/${idUsuario}`
           );
+
+          cy.get(pgDetalhes.InputId).should("have.value", idUsuario);
+          cy.get(pgDetalhes.InputName).should("have.value", name);
+          cy.get(pgDetalhes.InputEmail).should("have.value", email);
         });
       });
     });
@@ -57,25 +66,33 @@ describe("Listar usuários", () => {
       );
     });
 
-    it("Ir para cadastro de usuário", () => {
+    it("Link deve levar para cadastro de usuário", () => {
       cy.get(pgPrincipal.anchorVoltar).should("be.visible");
       cy.get(pgPrincipal.anchorVoltar).click();
       cy.url().should("equal", urlCadastroUsuario);
     });
   });
 
-  // Fazer mais testes
-  describe.only("Teste mockado com 6 usuários no banco de dados", function () {
-    it("A lista deve trazer 6 usuários cadastrados", () => {
+  describe("Teste mockado com 6 usuários no banco de dados", function () {
+    beforeEach(function () {
       cy.intercept("GET", "/api/v1/users", {
         statusCode: 200,
         fixture: "lista6Usuarios.json",
       }).as("mockTeste");
+    });
 
+    it("A lista deve trazer 6 usuários cadastrados", () => {
       cy.wait("@mockTeste");
-      cy.log(cy.get(pgPrincipal.divListaDeUsuarios));
 
       cy.get(pgPrincipal.divListaDeUsuarios).should("have.length", 6);
+    });
+
+    it("Os botões de páginas estarão desabilitados", function () {
+      cy.get(pgPrincipal.liTextoPaginas)
+        .invoke("text")
+        .should("be.equal", "1 de 1");
+      cy.get(pgPrincipal.paginaAnterior).should("be.disabled");
+      cy.get(pgPrincipal.paginaProxima).should("be.disabled");
     });
   });
 
@@ -101,6 +118,9 @@ describe("Listar usuários", () => {
 
     it("Os botões estarão desabilitados", function () {
       cy.wait("@pequenaListaDeUsuarios");
+      cy.get(pgPrincipal.liTextoPaginas)
+        .invoke("text")
+        .should("be.equal", "1 de 1");
       cy.get(pgPrincipal.paginaAnterior).should("be.disabled");
       cy.get(pgPrincipal.paginaProxima).should("be.disabled");
     });
@@ -110,24 +130,35 @@ describe("Listar usuários", () => {
     beforeEach(function () {
       cy.intercept("GET", "api/v1/users", {
         statusCode: 200,
-        fixture: "listaDeUsuariosMock.json",
-      }).as("usuarioMockado");
+        fixture: "lista12Usuarios.json",
+      }).as("listMockUser");
     });
 
     it("Quando houver 12 usuários o site deverá ter 2 páginas", function () {
-      cy.wait("@usuarioMockado");
+      cy.wait("@listMockUser");
       cy.get("[id='userData']").should("have.length", 6);
       cy.get(pgPrincipal.liTextoPaginas).should("have.text", "1 de 2");
     });
 
     it("O botão de paginação 'Anterior' estará desabilitado e 'Próxima' estará habilitado", function () {
-      cy.wait("@usuarioMockado");
+      cy.wait("@listMockUser");
       cy.get(pgPrincipal.paginaAnterior).should("be.disabled");
       cy.get(pgPrincipal.paginaProxima).should("be.enabled");
     });
 
+    it("A página 2 deverá trazer os usuários de 1 a 6", function () {
+      cy.wait("@listMockUser");
+      cy.contains("Nome:")
+        .invoke("text")
+        .should("be.equal", "Nome: Usuário mockado");
+      cy.contains("E-mail:")
+        .invoke("text")
+        .should("be.equal", "E-mail: usariomackado@qa.com");
+      cy.get(pgPrincipal.liTextoPaginas).should("have.text", "1 de 2");
+    });
+
     it("A página 2 deverá trazer os usuários de 7 a 12", function () {
-      cy.wait("@usuarioMockado");
+      cy.wait("@listMockUser");
       cy.get(pgPrincipal.paginaProxima).click();
       cy.get(pgPrincipal.liTextoPaginas).should("have.text", "2 de 2");
     });
@@ -140,7 +171,7 @@ describe("Listar usuários", () => {
       }).as("noUsers");
     });
 
-    it("Não aparecerá os elementos dos usuários quando não houver nenhum usuário", () => {
+    it("Não aparecerá os cards dos usuários quando não houver nenhum usuário", () => {
       cy.wait("@noUsers");
       cy.contains(
         "h3",

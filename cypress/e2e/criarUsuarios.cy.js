@@ -73,7 +73,7 @@ describe("Teste de criar usuários", () => {
       cy.contains("span", "O campo e-mail é obrigatório.").should("be.visible");
     });
 
-    it("O email não deve ser criado sem @.co", () => {
+    it("O email não deve ser criado sem o domínio @.co", () => {
       cadastrarUsuario.typeNome(nome);
       cadastrarUsuario.typeEmail("marianagmail.com");
       cadastrarUsuario.clickcadastrar();
@@ -96,8 +96,6 @@ describe("Teste de criar usuários", () => {
         emailUser = resposta.email;
         userId = resposta.id;
 
-        cy.log(userId, nomeUser);
-
         cadastrarUsuario.typeNome(nomeUser);
         cadastrarUsuario.typeEmail(emailUser);
         cadastrarUsuario.clickcadastrar();
@@ -109,13 +107,12 @@ describe("Teste de criar usuários", () => {
       });
     });
 
-    it("Deve ser possível cadastrar usuário com até 100 caracteres", function () {
+    it("Deve ser possível cadastrar usuário com nome de até 100 caracteres", function () {
       cy.intercept("POST", "/api/v1/users").as("criarUsuario");
       let nomeCriado = "";
       for (let i = 1; i <= 100; i++) {
         nomeCriado += "a";
       }
-      cy.log(nomeCriado.length);
 
       cadastrarUsuario.typeNome(nomeCriado);
       cadastrarUsuario.typeEmail(email);
@@ -129,8 +126,6 @@ describe("Teste de criar usuários", () => {
       for (let i = 1; i <= 101; i++) {
         nomeCriado += "a";
       }
-      cy.log(nomeCriado.length);
-
       cadastrarUsuario.typeNome(nomeCriado);
       cadastrarUsuario.typeEmail(email);
       cadastrarUsuario.clickcadastrar();
@@ -148,12 +143,11 @@ describe("Teste de criar usuários", () => {
       );
     });
 
-    it.only("Não deve ser possível cadastrar um e-mail com mais de 60 caracteres", () => {
+    it("Não deve ser possível cadastrar um e-mail com mais de 60 caracteres", () => {
       let emailCriado = "email@.com";
       for (let i = 1; i <= 51; i++) {
         emailCriado += "m";
       }
-      cy.log(emailCriado.length);
 
       cadastrarUsuario.typeNome(nome);
       cadastrarUsuario.typeEmail(emailCriado);

@@ -5,6 +5,7 @@ export class PaginaPrincipal {
   divListaDeUsuarios = "#listaUsuarios > #userData";
   divDadosUsuarios = "#userData";
   pNome = "#userDataName";
+  buttonsPesquisar = ".sc-iGgWBj.cvYpuE";
 
   liTextoPaginas = "#paginacaoAtual";
   paginaAnterior = "#paginacaoVoltar";
