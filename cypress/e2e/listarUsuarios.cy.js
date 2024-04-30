@@ -4,6 +4,7 @@ import { PaginaDetalhes } from "../support/pages/PaginaDetalhes";
 
 describe("Listar usuários", () => {
   beforeEach(() => {
+    cy.intercept("GET", "/api/v1/users").as("Users");
     cy.visit("/users");
   });
 
@@ -14,47 +15,8 @@ describe("Listar usuários", () => {
 
   describe.only("Testes de funcionamento da página", function () {
     it("Deve retornar cards dos usuários", () => {
-      cy.intercept("GET", "/api/v1/users").as("Users");
-
       cy.wait("@Users");
       cy.get(pgPrincipal.divListaDeUsuarios).should("be.visible");
-    });
-
-    it("Apertar o botão ver detalhes deve levar o usuário para outra página que conterá os inputs id, nome e e-mail", () => {
-      let idUsuario;
-      let name = faker.person.fullName();
-      let email = faker.internet.email();
-
-      cy.request("POST", "rarocrud-80bf38b38f1f.herokuapp.com/api/v1/users", {
-        name: name,
-        email: email,
-      }).then(function (resposta) {
-        cy.intercept("GET", "api/v1/users", {
-          statusCode: 200,
-          body: [
-            {
-              id: resposta.body.id,
-              name: name,
-              email: email,
-              createdAt: "2024-04-27T20:56:45.656Z",
-              updatedAt: "2024-04-27T20:56:45.656Z",
-            },
-          ],
-        }).as("getUsers");
-
-        cy.wait("@getUsers").then((intercept) => {
-          cy.get(pgPrincipal.anchorVerDetalhes).click();
-          idUsuario = intercept.response.body[0].id;
-          cy.url().should(
-            "equal",
-            `https://rarocrud-frontend-88984f6e4454.herokuapp.com/users/${idUsuario}`
-          );
-
-          cy.get(pgDetalhes.InputId).should("have.value", idUsuario);
-          cy.get(pgDetalhes.InputName).should("have.value", name);
-          cy.get(pgDetalhes.InputEmail).should("have.value", email);
-        });
-      });
     });
 
     it("Link para atualizar página inicial", () => {
@@ -185,6 +147,50 @@ describe("Listar usuários", () => {
       cy.wait("@noUsers");
       cy.contains("p", "Cadastre um novo usuário").click();
       cy.url().should("equal", urlCadastroUsuario);
+    });
+  });
+});
+
+describe.only("Testes gerais", function () {
+  let pgPrincipal = new PaginaPrincipal();
+  let pgDetalhes = new PaginaDetalhes();
+
+  it("Apertar o botão ver detalhes deve levar o usuário para outra página que conterá os inputs id, nome e e-mail", () => {
+    let idUsuario;
+    let name = faker.person.fullName();
+    let email = faker.internet.email();
+
+    cy.request("POST", "rarocrud-80bf38b38f1f.herokuapp.com/api/v1/users", {
+      name: name,
+      email: email,
+    }).then(function (resposta) {
+      cy.intercept("GET", "api/v1/users", {
+        statusCode: 200,
+        body: [
+          {
+            id: resposta.body.id,
+            name: name,
+            email: email,
+            createdAt: "2024-04-27T20:56:45.656Z",
+            updatedAt: "2024-04-27T20:56:45.656Z",
+          },
+        ],
+      }).as("getUsers");
+
+      cy.visit("/users");
+
+      cy.wait("@getUsers").then((intercept) => {
+        cy.get(pgPrincipal.anchorVerDetalhes).click();
+        idUsuario = intercept.response.body[0].id;
+        cy.url().should(
+          "equal",
+          `https://rarocrud-frontend-88984f6e4454.herokuapp.com/users/${idUsuario}`
+        );
+
+        cy.get(pgDetalhes.InputId).should("have.value", idUsuario);
+        cy.get(pgDetalhes.InputName).should("have.value", name);
+        cy.get(pgDetalhes.InputEmail).should("have.value", email);
+      });
     });
   });
 });
