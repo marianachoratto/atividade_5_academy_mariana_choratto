@@ -65,8 +65,14 @@ describe("Listar usuários", () => {
   });
 
   // Fazer mais testes
-  describe("Teste mockado com 6 usuários no banco de dados", function () {
+  describe.only("Teste mockado com 6 usuários no banco de dados", function () {
     it("A lista deve trazer 6 usuários cadastrados", () => {
+      cy.intercept("GET", "/api/v1/users", {
+        statusCode: 200,
+        fixture: "lista6Usuarios.json",
+      }).as("mockTeste");
+
+      cy.wait("@mockTeste");
       cy.log(cy.get(pgPrincipal.divListaDeUsuarios));
 
       cy.get(pgPrincipal.divListaDeUsuarios).should("have.length", 6);
